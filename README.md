@@ -6,7 +6,9 @@
 
 This repository contains MATLAB files for test problems highlighted in the paper, [Vu Thai Luan, Rujeko Chinomona & Daniel R. Reynolds, "Multirate exponential Rosenbrock methods," arXiv:1904.06474, 2019](https://arxiv.org/abs/1904.06474).
 
-Multirate Expontential Rosenbrock (MERB) methods of orders three (`MERB3`), four (`MERB4`), five (`MERB5`),and six (MERB6) are implemented on the additively split multirate problem:
+*to insert arxiv link 
+
+Multirate Exponential Rosenbrock (MERB) methods of orders three (`MERB3`), four (`MERB4`), five (`MERB5`),and six (MERB6) are implemented on the additively split multirate problem:
 
   u' = F(t,u) = J<sub>n</sub>u + V<sub>n</sub>t + N<sub>n</sub>(t,u)
 
