@@ -10,7 +10,7 @@ This repository contains MATLAB files for test problems highlighted in the paper
 
 Multirate Exponential Rosenbrock (MERB) methods of orders three (`MERB3`), four (`MERB4`), five (`MERB5`),and six (MERB6) are implemented on the additively split multirate problem:
 
-                 u' = F(t,u) = J<sub>n</sub>u + V<sub>n</sub>t + N<sub>n</sub>(t,u)
+  u' = F(t,u) = J<sub>n</sub>u + V<sub>n</sub>t + N<sub>n</sub>(t,u)
 
 where J<sub>n</sub> is the Jacobian of F at (t<sub>n</sub>,u<sub>n</sub>), V<sub>n</sub> is the partial derivative of F with respect to time at (t<sub>n</sub>,u<sub>n</sub>), and N<sub>n</sub>(t,u) = F(t,u) - J<sub>n</sub>u - V<sub>n</sub>t.
 
