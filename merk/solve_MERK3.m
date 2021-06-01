@@ -1,5 +1,5 @@
 function [u_n,nffast,nfslow] = solve_MERK3(A,gn,internalsolver,finalstepsolver,u0,m,tvals,h,Nn,JacFn)
-  % Usage: [u_n,nffast,nfslow] = solve_MERK3(A,gn,internalsolver,finalstepsolver,u0,m,tvals,h,F,JacFn)
+  % Usage: [u_n,nffast,nfslow] = solve_MERK3(A,gn,internalsolver,finalstepsolver,u0,m,tvals,h,Nn,JacFn)
   %
   % Third order multirate exponential Runge Kutta solver for the  ODE problem
   %     u' = F(t, u(t)) = A*u + gn(t,u(t)), t in tvals,
