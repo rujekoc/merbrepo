@@ -1,15 +1,15 @@
-function [Unew,nffast,nfslow] = solve_MERB6(Fn,Jfy,Jft,stagesolver,stepsolver, U0, m, tinterval,H,N,Dn)
-  % usage: [Unew,nffast,nfslow] = solve_MERB6(Fn,Jfy,Jft,stagesolver,stepsolver, U0, m, tinterval,H,N,Dn)
+function [Unew,nffast,nfslow] = solve_MERB6(Fn,Jfy,Jft,stagesolver,stepsolver, U0, m, tinterval,H,implicitsolve,N,Dn)
+  % usage: [Unew,nffast,nfslow] = solve_MERB6(Fn,Jfy,Jft,stagesolver,stepsolver, U0, m, tinterval,H,implicitsolve,N,Dn)
   %
   % Sixth order multirate exponential Rosenbrock solver for the vector-valued ODE problem
-  %     u' = F(t,u), t in tinterval, y in R^n,
-  %     u(t0) = [u1(t0), u2(t0), ..., un(t0)]'.
+  %     u' = F(t,u), t in tinterval, y in R^m,
+  %     u(t0) = [u1(t0), u2(t0), ..., um(t0)]'.
   %
   % Inputs:
   %     Fn          = function handle for F(t,u(t))
   %     Jfy         = function handle for (Jacobian) = F_u(t,u(t))
   %     Jft         = function handle for F_t(t,u(t))
-  %     stagesolver = string holding function name for RK method for stage value computation
+  %     stagesolver = string holding function name for  RK method
   %                 Butcher table formatting
   %                 B = [ci A;
   %                      q b]
@@ -17,33 +17,34 @@ function [Unew,nffast,nfslow] = solve_MERB6(Fn,Jfy,Jft,stagesolver,stepsolver, U
   %                    A is a matrix of Butcher coefficients (s-by-s),
   %                    q is an integer denoting the method order of accuracy,
   %                    b is a vector of solution weights (1-by-s),
-  %     stepsolver  = string holding function name for RK method for step value computation
-  %     U0          = initial value array (column vector of length n)
-  %      m          = optimal time scale separation factor
-  %     tinterval   = [t_k,t_k+1] initial and final time
+  %     stepsolver  = string holding function name for RK method
+  %     tinterval   = [t_n,t_n+1] initial and final time
+  %     U0          = initial value array (column vector of length m)
   %     H           = slow (macro) time step
+  %   implicitsolve = true/logical 1 if using implicit RK for inner solve,
+  %                   false/ logical 0 for explicit RK
   % Optional inputs:
   %     N           = function handle for nonlinearity in F: F-F_u*u
   %     Dn          = function handle for F(t+dt,V) - F_U(t,U)*V - F(t,u)-F_U(t,U)*U - dt*F_t(t,U)
   %
   % Outputs:
   %     Unew    = column vector with solution at final time
-  %     nffast  = number of fast function evaluations
-  %     nfslow  = number of slow function evaluations
+  %     nffast = number of fast function calls
+  %     nfslow = number of slow function calls
   %
   %
-  % Rujeko Chinomona, Daniel Reynolds
+  % Rujeko Chinomona
   % Department of Mathematics
-  % Southern Methodist University
-  % May 2021
+  % Temple University
+  % February 2022
 
   % flags for definition of N and Dn functions
   user_N  = false;
   user_Dn = false;
-  if (nargin > 9)
+  if (nargin > 10)
     user_N = true;
   end
-  if (nargin > 10)
+  if (nargin > 11)
     user_Dn = true;
   end
 
@@ -59,6 +60,8 @@ function [Unew,nffast,nfslow] = solve_MERB6(Fn,Jfy,Jft,stagesolver,stepsolver, U
   ONEMSM  = 1-sqrt(eps);                        % coefficient to account for floating-point roundoff
   nffast  = 0;                                  % initialize function evaluations
   nfslow  = 0;
+  rtol    = 1e20;
+  atol    = rtol*ones(size(U0));
 
   while tn < tinterval(2)*ONEMSM
 
@@ -91,9 +94,15 @@ function [Unew,nffast,nfslow] = solve_MERB6(Fn,Jfy,Jft,stagesolver,stepsolver, U
     % Set up right hand side for modified ODE to solve for 2nd stage
     pn2 = @(t)   Nn + t*JacT;
     fcn = @(t,y) Jac*y + pn2(t);
+    Jfcn = @(t,y) Jac;
 
-    % Solve for Un2 and Un3
-    [~,Y,nflocal] = solve_ERKfast(fcn,tsteps,Y0,B,hf);
+    %Solve for 2nd and 3rd stage
+    if implicitsolve
+      [~,Y,nsteps,lits,~] = solve_IRK(fcn,Jfcn,tsteps,Y0,B,rtol,atol,hf,hf,hf);
+      nflocal = (nsteps + lits)*(numel(B(1,:))-1);
+    else
+      [~,Y,nflocal] = solve_ERKfast(fcn,tsteps,Y0,B,hf);
+    end
     Z2 = Y(:,end);
     Z3 = Y(:,2);
     nffast = nffast + nflocal;          % Update number of fast function calls
@@ -115,7 +124,12 @@ function [Unew,nffast,nfslow] = solve_MERB6(Fn,Jfy,Jft,stagesolver,stepsolver, U
     fcn  = @(t,y) Jac*y + pn4(t);
 
     %Solve for Un3 and Un4
-    [~,Y,nflocal] = solve_ERKfast(fcn,tsteps,Y0,B,hf);
+    if implicitsolve
+      [~,Y,nsteps,lits,~] = solve_IRK(fcn,Jfcn,tsteps,Y0,B,rtol,atol,hf,hf,hf);
+      nflocal = (nsteps + lits)*(numel(B(1,:))-1);
+    else
+      [~,Y,nflocal] = solve_ERKfast(fcn,tsteps,Y0,B,hf);
+    end
     Z5 = Y(:,2);
     Z6 = Y(:,3);
     Z7 = Y(:,4);
@@ -134,7 +148,6 @@ function [Unew,nffast,nfslow] = solve_MERB6(Fn,Jfy,Jft,stagesolver,stepsolver, U
     b = zeros(1,7);
     e = zeros(1,7);
 
-    % Set coefficients for Dni's
     for i = 4:7
       g(i) = 1/c(i)^2;
       for k = 4:7
@@ -173,7 +186,12 @@ function [Unew,nffast,nfslow] = solve_MERB6(Fn,Jfy,Jft,stagesolver,stepsolver, U
     hf = H/m;
 
     % Solve for u_{n+1} on [0,H]
-    [~,Y,nflocal] = solve_ERKfast(fcn,[0,H],Y0,D,hf);
+    if implicitsolve
+      [~,Y,nsteps,lits,~] = solve_IRK(fcn,Jfcn,[0,H],Y0,D,rtol,atol,hf,hf,hf);
+      nflocal = (nsteps+lits)*(numel(D(1,:))-1);
+    else
+      [~,Y,nflocal] = solve_ERKfast(fcn,[0,H],Y0,D,hf);
+    end
     Unew = Y(:,end);
     nffast = nffast + nflocal;            % Update number of fast function calls
 
