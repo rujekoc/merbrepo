@@ -79,7 +79,7 @@ for isol = 1:length(solvers)
     for k = 2:n
       % Compute solution using MERB solver
       Y0step     = Y(:,k-1);
-      [Yout,fastcalls,slowcalls]= solver(fn,Jfy,Jft,rkstage,rkstep,Y0step,m,[tout(k-1),tout(k)],hs,Nn,Dn);
+      [Yout,fastcalls,slowcalls]= solver(fn,Jfy,Jft,rkstage,rkstep,Y0step,m,[tout(k-1),tout(k)],hs,false,Nn,Dn);
       Y(:,k) = Yout;
       % Update function calls
       nffast(j) = nffast(j)+ fastcalls;

@@ -3,9 +3,9 @@ function driver_grayscott_merb(isol)
   % driver to test MERB methods with implicit inner integrators on Gray-Scott
   % problem
   % Input : index for MERB solver
-  %       1(no input) - solve_MERB3a
-  %       2           - solve_MERB4v1
-  %       3           - solve_MERB5a
+  %       1(no input) - solve_MERB3
+  %       2           - solve_MERB4
+  %       3           - solve_MERB5
   %       4           - solve_MERB6
   %
   % Rujeko Chinomona
